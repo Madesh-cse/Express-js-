@@ -1,0 +1,5 @@
+20250207	06:38:41	f6c98606-09d4-41d9-ba2b-5e02ea1cb8b7	/	GET
+20250207	06:38:41	4bec9a9d-90ee-462f-bcdf-450fd8f5e65e	/css/style.css	GET
+20250207	06:38:41	2e5da052-65e0-4fe1-95f2-495b4bab2c04	/favicon.ico	GET
+20250207	06:38:54	daaea40e-5636-416e-b535-e0c4d4d05c20	/data/data.txt	GET
+20250207	06:39:07	cd23f3db-5f14-43c1-a1c9-7f51bbb8c7f4	/subdir/index	GET
