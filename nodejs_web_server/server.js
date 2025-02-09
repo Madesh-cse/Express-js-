@@ -1,99 +1,44 @@
-const http = require('http');
-const path = require('path');
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-
-const logEvents = require('./logEvents');
-const EventEmitter = require('events');
-class Emitter extends EventEmitter { };
-// initialize object 
-const myEmitter = new Emitter();
-myEmitter.on('log', (msg, fileName) => logEvents(msg, fileName));
+const path = require('path')
+const express = require('express')
+const app = express()
 const PORT = process.env.PORT || 3500;
 
-const serveFile = async (filePath, contentType, response) => {
-    try {
-        const rawData = await fsPromises.readFile(
-            filePath,
-            !contentType.includes('image') ? 'utf8' : ''
-        );
-        const data = contentType === 'application/json'
-            ? JSON.parse(rawData) : rawData;
-        response.writeHead(
-            filePath.includes('404.html') ? 404 : 200,
-            { 'Content-Type': contentType }
-        );
-        response.end(
-            contentType === 'application/json' ? JSON.stringify(data) : data
-        );
-    } catch (err) {
-        console.log(err);
-        myEmitter.emit('log', `${err.name}: ${err.message}`, 'errLog.txt');
-        response.statusCode = 500;
-        response.end();
-    }
-}
+console.log(__dirname)
 
-const server = http.createServer((req, res) => {
-    console.log(req.url, req.method);
-    myEmitter.emit('log', `${req.url}\t${req.method}`, 'reqLog.txt');
+// optional(.html) ?
+app.get('^/$|/index(.html)?',(req,res)=>{
+    // res.sendFile('./views/index.html',{root:__dirname})
 
-    const extension = path.extname(req.url);
+    res.sendFile(path.join(__dirname,'views','index.html'))
+})
 
-    let contentType;
+// Node js server redirect
+app.get('/new-page(.html)?',(req,res)=>{
 
-    switch (extension) {
-        case '.css':
-            contentType = 'text/css';
-            break;
-        case '.js':
-            contentType = 'text/javascript';
-            break;
-        case '.json':
-            contentType = 'application/json';
-            break;
-        case '.jpg':
-            contentType = 'image/jpeg';
-            break;
-        case '.png':
-            contentType = 'image/png';
-            break;
-        case '.txt':
-            contentType = 'text/plain';
-            break;
-        default:
-            contentType = 'text/html';
-    }
+    res.sendFile(path.join(__dirname,'views','new-page.html'))
+})
 
-    let filePath =
-        contentType === 'text/html' && req.url === '/'
-            ? path.join(__dirname, 'views', 'index.html')
-            : contentType === 'text/html' && req.url.slice(-1) === '/'
-                ? path.join(__dirname, 'views', req.url, 'index.html')
-                : contentType === 'text/html'
-                    ? path.join(__dirname, 'views', req.url)
-                    : path.join(__dirname, req.url);
+//express js server redirect
+// 301 e resource has been permanently moved to a new location
+// 302 A 302 (found) status means the resource is temporarily located elsewhere.6 
+app.get('/old-page(.html)?',(req,res)=>{
 
-    // makes .html extension not required in the browser
-    if (!extension && req.url.slice(-1) !== '/') filePath += '.html';
+    res.redirect(301,'/new-page.html') // default 302
+})
 
-    const fileExists = fs.existsSync(filePath);
+//Route Handler
 
-    if (fileExists) {
-        serveFile(filePath, contentType, res);
-    } else {
-        switch (path.parse(filePath).base) {
-            case 'old-page.html':
-                res.writeHead(301, { 'Location': '/new-page.html' });
-                res.end();
-                break;
-            case 'www-page.html':
-                res.writeHead(301, { 'Location': '/' });
-                res.end();
-                break;
-            default:
-                serveFile(path.join(__dirname, 'views', '404.html'), 'text/html', res);
-        }
-    }
-});
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.get('/hello(.html)?',(req,res,next)=>{
+    console.log('attempt to load the hello.html')
+    next()
+},(req,res)=>{
+    res.send('Hello World')
+})
+
+
+app.get('/*',(req,res)=>{
+
+   res.status(404).sendFile(path.join(__dirname,'views','404.html'))
+})
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
