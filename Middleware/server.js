@@ -4,6 +4,8 @@ const app = express()
 const cors = require('cors')
 const {logger} = require('./middleware/logEvents')
 const errorHandler = require('./middleware/errorHandle')
+const { json } = require('stream/consumers')
+const { error } = require('console')
 const PORT = process.env.PORT || 3500;
 
 //The next middleware function is commonly denoted by a variable named next.
@@ -92,8 +94,18 @@ app.get('/chain(.html)?', [one, two, three])
 
 //request all route with using all()
 app.all('*',(req,res)=>{
+    res.status(404)
+    if(req.accepts('html')){
+        res.sendFile(path.join(__dirname,'views','404.html'))
+    }
+    else if(req.accepts(json)){
+        res.json({error:'404 NOT FOUND'})
+    }
+    else{
+        res.type('txt').send('404 NOT FOUND')
+    }
 
-   res.status(404).sendFile(path.join(__dirname,'views','404.html'))
+   
 })
 
 //500 Internal Server Error
